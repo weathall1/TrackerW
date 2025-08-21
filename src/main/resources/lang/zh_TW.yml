@@ -12,3 +12,4 @@ messages:
   config-reloaded: "PlayerTracker 配置已重新載入。"
   no-permission: "您無權執行此命令。"
   actionbar-countdown: "傳送倒計時：%seconds%秒"
+  compass-name: "追蹤指南針"

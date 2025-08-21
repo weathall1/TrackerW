@@ -4,6 +4,8 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.UUID;
+
 public class PAPIExpansion extends PlaceholderExpansion {
     private final TrackingManager trackingManager;
 
@@ -48,13 +50,24 @@ public class PAPIExpansion extends PlaceholderExpansion {
             case "istracking":
                 return String.valueOf(trackingManager.isTracking(player.getUniqueId()));
             case "tracktime":
+                // 檢查玩家是否為追蹤者
                 Long startTime = trackingManager.getTrackingStartTime(player.getUniqueId());
-                if (startTime == null) {
-                    return "0";
+                if (startTime != null) {
+                    long elapsedMillis = System.currentTimeMillis() - startTime;
+                    long remainingMillis = trackingManager.getTrackingDurationMillis() - elapsedMillis;
+                    return String.valueOf(Math.max(0, remainingMillis / 1000));
                 }
-                long elapsedMillis = System.currentTimeMillis() - startTime;
-                long remainingMillis = trackingManager.getTrackingDurationMillis() - elapsedMillis;
-                return String.valueOf(Math.max(0, remainingMillis / 1000));
+                // 檢查玩家是否為被追蹤者
+                UUID trackerUUID = trackingManager.getTrackerUUID(player.getUniqueId());
+                if (trackerUUID != null) {
+                    startTime = trackingManager.getTrackingStartTime(trackerUUID);
+                    if (startTime != null) {
+                        long elapsedMillis = System.currentTimeMillis() - startTime;
+                        long remainingMillis = trackingManager.getTrackingDurationMillis() - elapsedMillis;
+                        return String.valueOf(Math.max(0, remainingMillis / 1000));
+                    }
+                }
+                return "0";
             default:
                 return null;
         }

@@ -47,9 +47,10 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
         economyHandler = new EconomyHandler(this);
         homeProtectionHandler = new HomeProtectionHandler(this, essentials, protectedCenter);
         worldProtectionHandler = new WorldProtectionHandler(this);
-        compassHandler = new CompassHandler(this);
-        teleportHandler = new TeleportHandler(this); // Initialize TeleportHandler with plugin instance
+        teleportHandler = new TeleportHandler(this);
+        compassHandler = new CompassHandler(this, null); // Initialize with null TrackingManager temporarily
         trackingManager = new TrackingManager(this, compassHandler, economyHandler);
+        compassHandler.setTrackingManager(trackingManager); // Set TrackingManager after initialization
         trackingGUI = new TrackingGUI(this, homeProtectionHandler, worldProtectionHandler, trackingManager, compassHandler, economyHandler, trackablePlayers);
         commandDisabler = new CommandDisabler(this, trackingManager);
 

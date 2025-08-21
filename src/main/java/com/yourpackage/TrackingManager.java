@@ -69,7 +69,7 @@ public class TrackingManager implements Listener {
         interruptedSound = plugin.getConfig().getString("interrupted-sound.sound", "BLOCK_NOTE_BLOCK_BASS");
         interruptedVolume = (float) plugin.getConfig().getDouble("interrupted-sound.volume", 1.0);
         interruptedPitch = (float) plugin.getConfig().getDouble("interrupted-sound.pitch", 0.5);
-        trackingDurationMillis = plugin.getConfig().getInt("tracking-duration-minutes", 5) * 60000;
+        trackingDurationMillis = plugin.getConfig().getInt("tracking-duration-seconds", 300) * 1000; // Changed to seconds
         actionBarEnabled = plugin.getConfig().getBoolean("actionbar.enabled", true);
         actionBarMessage = plugin.getConfig().getString("messages.actionbar-countdown", "傳送倒計時：%seconds%秒");
         teleportCancelledMessage = plugin.getConfig().getString("messages.teleport-cancelled", "傳送已取消，請重新選擇目標以再次嘗試。");
@@ -163,6 +163,15 @@ public class TrackingManager implements Listener {
 
     public int getTrackingDurationMillis() {
         return trackingDurationMillis;
+    }
+
+    public UUID getTrackerUUID(UUID targetUUID) {
+        for (Map.Entry<UUID, UUID> entry : trackingMap.entrySet()) {
+            if (entry.getValue().equals(targetUUID)) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     @EventHandler

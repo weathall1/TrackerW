@@ -1,6 +1,6 @@
 # PlayerTracker 配置文件
 # 傳送等候時間（秒）
-teleport-delay-seconds: 5
+teleport-delay-seconds: 10
 
 # 傳送倒計時音效
 countdown-sound:
@@ -37,7 +37,7 @@ protected-world: world
 gui-update-interval-seconds: 60
 
 # tracking 持續時間（分鐘）
-tracking-duration-minutes: 5
+tracking-duration-seconds: 300
 
 # 經濟系統設置（需要 Vault）
 economy:
