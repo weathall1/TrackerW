@@ -10,6 +10,8 @@ public class PVPManagerProtectionHandler {
     private final JavaPlugin plugin;
     private final PvPManager pvpManager;
     private boolean enablePvpProtection;
+    private boolean enablePvpOffProtection;
+    private boolean enableNewbieProtection;
 
     public PVPManagerProtectionHandler(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -18,7 +20,9 @@ public class PVPManagerProtectionHandler {
     }
 
     public void reloadConfigValues() {
-        enablePvpProtection = plugin.getConfig().getBoolean("pvp-protection.enable", true);
+        enablePvpProtection = plugin.getConfig().getBoolean("pvpmanager-protection.enable", true);
+        enablePvpOffProtection = plugin.getConfig().getBoolean("pvpmanager-protection.pvpmanager-protection-pvpoff", true);
+        enableNewbieProtection = plugin.getConfig().getBoolean("pvpmanager-protection.pvpmanager-protection-newbie", true);
     }
 
     public boolean isPvpDisabled(Player player) {
@@ -26,6 +30,10 @@ public class PVPManagerProtectionHandler {
             return false;
         }
         PvPlayer pvPlayer = PvPlayer.get(player);
-        return pvPlayer != null && !pvPlayer.hasPvPEnabled();
+        if (pvPlayer == null) {
+            return false;
+        }
+        return (enablePvpOffProtection && !pvPlayer.hasPvPEnabled()) ||
+                (enableNewbieProtection && pvPlayer.isNewbie());
     }
 }

@@ -58,6 +58,7 @@ world-protection:
   enable: true             # 是否啟用世界保護功能
   untrackable-worlds:      # 不可追蹤的世界列表
     - AfkZone
+    - spawn
 
 # Y座標保護設置
 y-level-protection:
@@ -65,6 +66,20 @@ y-level-protection:
   y-level-threshold: -13.0 # Y座標閾值，玩家低於此值時觸發保護
   protected-worlds:        # 應用Y座標保護的世界列表
     - world
-# PvPManager Depend setting
-pvp-protection:
-  enable: true             # 是否啟用PvP狀態保護（PvP關閉的玩家不可被追蹤）
+# PvPManager Protection Settings
+pvpmanager-protection:
+  enable: true             # 是否啟用PvPManager保護檢查
+  pvpmanager-protection-pvpoff: true  # 是否檢查PvP關閉狀態
+  pvpmanager-protection-newbie: true  # 是否檢查新手保護
+
+# 資料庫設置
+Database:
+  # Database type, supported databases: SQLite or MySQL
+  Type: SQLite
+  # Only fill this section if using MySQL
+  MySQL:
+    Host: 127.0.0.1
+    Port: 3306
+    Username: root
+    Password: '12345'
+    Database: playertracker  # 專用資料庫名稱，勿與 minecraft 資料庫重疊

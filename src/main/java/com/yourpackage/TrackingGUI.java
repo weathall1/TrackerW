@@ -50,7 +50,7 @@ public class TrackingGUI implements Listener {
     }
 
     public void reloadConfigValues() {
-        cannotTrackMessage = plugin.getConfig().getString("messages.cannot-track", "無法追蹤 {target}，該玩家位於生成點保護範圍、不可追蹤世界、Y座標保護範圍、家保護範圍或已關閉PvP。");
+        cannotTrackMessage = plugin.getConfig().getString("messages.cannot-track", "無法追蹤 {target}，該玩家位於生成點保護範圍、不可追蹤世界、Y座標保護範圍、家保護範圍、已關閉PvP或處於新手保護中。");
         cannotTrackTrackingMessage = plugin.getConfig().getString("messages.cannot-track-tracking", "無法追蹤 {target}，該玩家正在追蹤他人或被追蹤。");
         homeProtectionHandler.reloadConfigValues();
         spawnProtectionHandler.reloadConfigValues();
