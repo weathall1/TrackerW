@@ -27,6 +27,7 @@ public class TrackingManager implements Listener {
     private final Map<UUID, UUID> trackingMap = new HashMap<>();
     private final Set<UUID> trackedPlayers = new HashSet<>();
     private final Map<UUID, Long> immobilityTimers = new HashMap<>();
+    private final Map<UUID, UUID> pendingTargets = new HashMap<>(); // 新增臨時追蹤目標映射
     private final Map<UUID, BukkitRunnable> countdownTasks = new HashMap<>();
     private final Map<UUID, Long> trackingStartTimes = new HashMap<>();
     private int teleportDelayMillis;
@@ -69,7 +70,7 @@ public class TrackingManager implements Listener {
         interruptedSound = plugin.getConfig().getString("interrupted-sound.sound", "BLOCK_NOTE_BLOCK_BASS");
         interruptedVolume = (float) plugin.getConfig().getDouble("interrupted-sound.volume", 1.0);
         interruptedPitch = (float) plugin.getConfig().getDouble("interrupted-sound.pitch", 0.5);
-        trackingDurationMillis = plugin.getConfig().getInt("tracking-duration-seconds", 300) * 1000; // Changed to seconds
+        trackingDurationMillis = plugin.getConfig().getInt("tracking-duration-seconds", 300) * 1000;
         actionBarEnabled = plugin.getConfig().getBoolean("actionbar.enabled", true);
         actionBarMessage = plugin.getConfig().getString("messages.actionbar-countdown", "傳送倒計時：%seconds%秒");
         teleportCancelledMessage = plugin.getConfig().getString("messages.teleport-cancelled", "傳送已取消，請重新選擇目標以再次嘗試。");
@@ -82,18 +83,23 @@ public class TrackingManager implements Listener {
     }
 
     public void startTracking(Player tracker, Player target) {
-        trackingMap.put(tracker.getUniqueId(), target.getUniqueId());
-        trackedPlayers.add(target.getUniqueId());
-        immobilityTimers.put(tracker.getUniqueId(), System.currentTimeMillis());
+        UUID trackerUUID = tracker.getUniqueId();
+        immobilityTimers.put(trackerUUID, System.currentTimeMillis());
+        pendingTargets.put(trackerUUID, target.getUniqueId()); // 儲存臨時追蹤目標
         tracker.sendMessage(trackingStartedMessage.replace("{target}", target.getName()).replace("{seconds}", String.valueOf(teleportDelayMillis / 1000)));
-        target.sendMessage(trackingStartedNotifyTargetMessage.replace("{tracker}", tracker.getName()));
         startCountdown(tracker);
     }
 
     public void confirmTracking(Player tracker, Player target) {
         if (economyHandler.deductTrackCost(tracker)) {
-            trackingStartTimes.put(tracker.getUniqueId(), System.currentTimeMillis());
+            UUID trackerUUID = tracker.getUniqueId();
+            UUID targetUUID = target.getUniqueId();
+            trackingMap.put(trackerUUID, targetUUID);
+            trackedPlayers.add(targetUUID);
+            trackingStartTimes.put(trackerUUID, System.currentTimeMillis());
+            pendingTargets.remove(trackerUUID); // 移除臨時目標
             compassHandler.giveTrackingCompass(tracker, target);
+            target.sendMessage(trackingStartedNotifyTargetMessage.replace("{tracker}", tracker.getName()));
             tracker.sendMessage(teleportSuccessMessage);
         }
     }
@@ -110,6 +116,7 @@ public class TrackingManager implements Listener {
         }
         immobilityTimers.remove(trackerUUID);
         trackingStartTimes.remove(trackerUUID);
+        pendingTargets.remove(trackerUUID); // 清理臨時目標
         compassHandler.stopCompassTask(trackerUUID);
         stopCountdownTask(trackerUUID);
         if (actionBarEnabled) {
@@ -141,6 +148,7 @@ public class TrackingManager implements Listener {
                 trackedPlayers.remove(trackedUUID);
                 immobilityTimers.remove(trackerUUID);
                 trackingStartTimes.remove(trackerUUID);
+                pendingTargets.remove(trackerUUID); // 清理臨時目標
             }
         }
     }
@@ -154,7 +162,11 @@ public class TrackingManager implements Listener {
     }
 
     public UUID getTarget(UUID trackerUUID) {
-        return trackingMap.get(trackerUUID);
+        UUID targetUUID = trackingMap.get(trackerUUID);
+        if (targetUUID == null) {
+            targetUUID = pendingTargets.get(trackerUUID); // 檢查臨時目標
+        }
+        return targetUUID;
     }
 
     public Long getTrackingStartTime(UUID playerUUID) {
@@ -177,16 +189,15 @@ public class TrackingManager implements Listener {
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
-        if (trackingMap.containsKey(uuid) && event.getFrom().distance(event.getTo()) > 0.1) {
-            if (immobilityTimers.containsKey(uuid)) {
-                immobilityTimers.remove(uuid);
-                playInterruptedSound(event.getPlayer());
-                stopCountdownTask(uuid);
-                if (actionBarEnabled) {
-                    event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
-                }
-                event.getPlayer().sendMessage(teleportCancelledMessage);
+        if (immobilityTimers.containsKey(uuid) && event.getFrom().distance(event.getTo()) > 0.1) {
+            immobilityTimers.remove(uuid);
+            pendingTargets.remove(uuid); // 清理臨時目標
+            playInterruptedSound(event.getPlayer());
+            stopCountdownTask(uuid);
+            if (actionBarEnabled) {
+                event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(""));
             }
+            event.getPlayer().sendMessage(teleportCancelledMessage);
         }
     }
 
@@ -199,7 +210,7 @@ public class TrackingManager implements Listener {
 
             @Override
             public void run() {
-                if (!trackingMap.containsKey(uuid) || !immobilityTimers.containsKey(uuid) || immobilityTimers.get(uuid) != startTime) {
+                if (!immobilityTimers.containsKey(uuid) || immobilityTimers.get(uuid) != startTime) {
                     this.cancel();
                     return;
                 }
@@ -241,6 +252,7 @@ public class TrackingManager implements Listener {
                     if (tracker == null) continue;
                     if (System.currentTimeMillis() - entry.getValue() >= teleportDelayMillis) {
                         UUID targetId = getTarget(trackerId);
+                        if (targetId == null) continue; // 防止 null 目標
                         Player target = Bukkit.getPlayer(targetId);
                         if (target != null) {
                             teleportHandler.teleportNearTarget(tracker, target);
