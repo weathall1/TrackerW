@@ -15,12 +15,12 @@ public class PAPIExpansion extends PlaceholderExpansion {
 
     @Override
     public @NotNull String getIdentifier() {
-        return "tracking";
+        return "trackerW";
     }
 
     @Override
     public @NotNull String getAuthor() {
-        return "YourName"; // 請替換為您的作者名稱
+        return "Weathall1"; // 請替換為您的作者名稱
     }
 
     @Override

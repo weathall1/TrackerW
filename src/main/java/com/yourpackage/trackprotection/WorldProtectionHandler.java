@@ -8,6 +8,7 @@ import java.util.List;
 public class WorldProtectionHandler {
     private final JavaPlugin plugin;
     private List<String> untrackableWorlds;
+    private boolean enableWorldProtection;
 
     public WorldProtectionHandler(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -15,10 +16,15 @@ public class WorldProtectionHandler {
     }
 
     public void reloadConfigValues() {
-        untrackableWorlds = plugin.getConfig().getStringList("untrackable-worlds");
+        enableWorldProtection = plugin.getConfig().getBoolean("world-protection.enable", true);
+        untrackableWorlds = plugin.getConfig().getStringList("world-protection.untrackable-worlds");
     }
 
     public boolean isInUntrackableWorld(Player player) {
-        return untrackableWorlds.contains(player.getLocation().getWorld().getName());
+        if (!enableWorldProtection) {
+            return false;
+        }
+        String worldName = player.getWorld().getName();
+        return untrackableWorlds.stream().anyMatch(world -> world.equalsIgnoreCase(worldName));
     }
 }

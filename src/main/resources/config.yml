@@ -21,20 +21,11 @@ actionbar:
   enabled: true
   message: "傳送倒計時：%seconds%秒"
 
-# 家保護範圍（以chunk為單位，0=僅home chunk，1=周圍1層chunk，總9個，2=周圍2層chunk，總25個）
-home-protection-chunk-range: 1
-
-# Y level閾值（低於此值且在home保護範圍內的玩家不受追蹤）
-y-level-threshold: -13
-
-# 受保護範圍（以出生點為中心，單位：格）
-protected-radius: 0
-
 # 受保護世界（出生點保護範圍所在世界）
 protected-world: world
 
 # GUI 更新間隔（秒）
-gui-update-interval-seconds: 60
+gui-update-interval-seconds: 30
 
 # tracking 持續時間（分鐘）
 tracking-duration-seconds: 300
@@ -44,11 +35,36 @@ economy:
   track-cost: 50000
   cancel-cost: 70000
 
-# 不受追蹤的世界清單
-untrackable-worlds:
-  - AfkZone
-# 傳送半徑（格，預設500）
+
 # WildRTP 傳送範圍（單位：格）
 teleport:
   startRadius: 300
   endRadius: 500
+
+
+# 家保護設置
+home-protection:
+  enable: false            # 是否啟用家保護功能（僅檢查玩家的家）
+  chunk-range: 1           # 家保護的區塊範圍
+
+# 生成點保護設置
+spawn-protection:
+  enable: false             # 是否啟用生成點保護功能
+  protected-radius: 100.0  # 生成點保護半徑
+  protected-world: world   # 生成點保護的世界
+
+# 世界保護設置
+world-protection:
+  enable: true             # 是否啟用世界保護功能
+  untrackable-worlds:      # 不可追蹤的世界列表
+    - AfkZone
+
+# Y座標保護設置
+y-level-protection:
+  enable: true             # 是否啟用Y座標保護功能
+  y-level-threshold: -13.0 # Y座標閾值，玩家低於此值時觸發保護
+  protected-worlds:        # 應用Y座標保護的世界列表
+    - world
+# PvPManager Depend setting
+pvp-protection:
+  enable: true             # 是否啟用PvP狀態保護（PvP關閉的玩家不可被追蹤）

@@ -1,8 +1,6 @@
 package com.yourpackage;
 
 import com.earth2me.essentials.Essentials;
-import com.yourpackage.trackprotection.HomeProtectionHandler;
-import com.yourpackage.trackprotection.WorldProtectionHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -18,8 +16,6 @@ import java.util.UUID;
 
 public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
     private Essentials essentials;
-    private HomeProtectionHandler homeProtectionHandler;
-    private WorldProtectionHandler worldProtectionHandler;
     private TrackingGUI trackingGUI;
     private TrackingManager trackingManager;
     private CompassHandler compassHandler;
@@ -38,20 +34,18 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
 
         essentials = (Essentials) Bukkit.getPluginManager().getPlugin("Essentials");
 
-        String protectedWorldName = getConfig().getString("protected-world", "world");
+        String protectedWorldName = getConfig().getString("spawn-protection.protected-world", "world");
         Location protectedCenter = Bukkit.getWorld(protectedWorldName) != null ?
                 Bukkit.getWorld(protectedWorldName).getSpawnLocation() :
                 Bukkit.getWorlds().get(0).getSpawnLocation();
-        trackablePlayers = new HashSet<>(); // Initialize before any usage
+        trackablePlayers = new HashSet<>();
 
         economyHandler = new EconomyHandler(this);
-        homeProtectionHandler = new HomeProtectionHandler(this, essentials, protectedCenter);
-        worldProtectionHandler = new WorldProtectionHandler(this);
         teleportHandler = new TeleportHandler(this);
-        compassHandler = new CompassHandler(this, null); // Initialize with null TrackingManager temporarily
+        compassHandler = new CompassHandler(this, null);
         trackingManager = new TrackingManager(this, compassHandler, economyHandler);
-        compassHandler.setTrackingManager(trackingManager); // Set TrackingManager after initialization
-        trackingGUI = new TrackingGUI(this, homeProtectionHandler, worldProtectionHandler, trackingManager, compassHandler, economyHandler, trackablePlayers);
+        compassHandler.setTrackingManager(trackingManager);
+        trackingGUI = new TrackingGUI(this, essentials, trackingManager, compassHandler, economyHandler, trackablePlayers, protectedCenter);
         commandDisabler = new CommandDisabler(this, trackingManager);
 
         getServer().getPluginManager().registerEvents(trackingGUI, this);
@@ -62,7 +56,6 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
         getCommand("canceltrack").setExecutor(this);
         getCommand("playertracker").setExecutor(this);
 
-        // Register PlaceholderAPI expansion if PlaceholderAPI is present
         if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new PAPIExpansion(trackingManager).register();
             getLogger().info("PlaceholderAPI expansion registered successfully.");
@@ -94,7 +87,7 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
     private void updateTrackablePlayers() {
         trackablePlayers.clear();
         for (Player target : Bukkit.getOnlinePlayers()) {
-            if (!homeProtectionHandler.isProtected(target) && !worldProtectionHandler.isInUntrackableWorld(target)) {
+            if (!trackingGUI.isPlayerProtected(target)) {
                 trackablePlayers.add(target.getUniqueId());
             }
         }
@@ -125,8 +118,6 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
     private void reloadPluginConfig() {
         reloadConfig();
         loadConfigValues();
-        homeProtectionHandler.reloadConfigValues();
-        worldProtectionHandler.reloadConfigValues();
         trackingManager.reloadConfigValues();
         trackingGUI.reloadConfigValues();
         commandDisabler.reloadConfigValues();

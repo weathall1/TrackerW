@@ -1,8 +1,13 @@
 package com.yourpackage;
 
+import com.earth2me.essentials.Essentials;
 import com.yourpackage.trackprotection.HomeProtectionHandler;
+import com.yourpackage.trackprotection.SpawnProtectionHandler;
 import com.yourpackage.trackprotection.WorldProtectionHandler;
+import com.yourpackage.trackprotection.YLevelProtectionHandler;
+import com.yourpackage.trackprotection.PVPManagerProtectionHandler;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,29 +23,40 @@ import java.util.UUID;
 
 public class TrackingGUI implements Listener {
     private final JavaPlugin plugin;
-    private final HomeProtectionHandler homeProtectionHandler;
-    private final WorldProtectionHandler worldProtectionHandler;
     private final TrackingManager trackingManager;
     private final CompassHandler compassHandler;
     private final EconomyHandler economyHandler;
     private final Set<UUID> trackablePlayers;
+    private final HomeProtectionHandler homeProtectionHandler;
+    private final SpawnProtectionHandler spawnProtectionHandler;
+    private final WorldProtectionHandler worldProtectionHandler;
+    private final YLevelProtectionHandler yLevelProtectionHandler;
+    private final PVPManagerProtectionHandler pvpManagerProtectionHandler;
     private String cannotTrackMessage;
     private String cannotTrackTrackingMessage;
 
-    public TrackingGUI(JavaPlugin plugin, HomeProtectionHandler homeProtectionHandler, WorldProtectionHandler worldProtectionHandler, TrackingManager trackingManager, CompassHandler compassHandler, EconomyHandler economyHandler, Set<UUID> trackablePlayers) {
+    public TrackingGUI(JavaPlugin plugin, Essentials essentials, TrackingManager trackingManager, CompassHandler compassHandler, EconomyHandler economyHandler, Set<UUID> trackablePlayers, Location protectedCenter) {
         this.plugin = plugin;
-        this.homeProtectionHandler = homeProtectionHandler;
-        this.worldProtectionHandler = worldProtectionHandler;
         this.trackingManager = trackingManager;
         this.compassHandler = compassHandler;
         this.economyHandler = economyHandler;
         this.trackablePlayers = trackablePlayers;
+        this.homeProtectionHandler = new HomeProtectionHandler(plugin, essentials);
+        this.spawnProtectionHandler = new SpawnProtectionHandler(plugin, protectedCenter);
+        this.worldProtectionHandler = new WorldProtectionHandler(plugin);
+        this.yLevelProtectionHandler = new YLevelProtectionHandler(plugin);
+        this.pvpManagerProtectionHandler = new PVPManagerProtectionHandler(plugin);
         reloadConfigValues();
     }
 
     public void reloadConfigValues() {
-        cannotTrackMessage = plugin.getConfig().getString("messages.cannot-track", "無法追蹤 {target}，該玩家位於其他玩家的家保護範圍內。");
+        cannotTrackMessage = plugin.getConfig().getString("messages.cannot-track", "無法追蹤 {target}，該玩家位於生成點保護範圍、不可追蹤世界、Y座標保護範圍、家保護範圍或已關閉PvP。");
         cannotTrackTrackingMessage = plugin.getConfig().getString("messages.cannot-track-tracking", "無法追蹤 {target}，該玩家正在追蹤他人或被追蹤。");
+        homeProtectionHandler.reloadConfigValues();
+        spawnProtectionHandler.reloadConfigValues();
+        worldProtectionHandler.reloadConfigValues();
+        yLevelProtectionHandler.reloadConfigValues();
+        pvpManagerProtectionHandler.reloadConfigValues();
     }
 
     public void openTrackingGUI(Player player) {
@@ -49,7 +65,6 @@ public class TrackingGUI implements Listener {
         for (UUID targetUUID : trackablePlayers) {
             Player target = Bukkit.getPlayer(targetUUID);
             if (target == null || target.equals(player)) continue;
-            // 過濾正在追蹤或被追蹤的玩家
             if (trackingManager.isTracking(targetUUID) || trackingManager.isTracked(targetUUID)) continue;
 
             ItemStack skull = new ItemStack(Material.PLAYER_HEAD);
@@ -71,13 +86,12 @@ public class TrackingGUI implements Listener {
         String targetName = event.getCurrentItem().getItemMeta().getDisplayName();
         Player target = Bukkit.getPlayer(targetName);
         if (target != null) {
-            // 即時檢查目標玩家是否正在追蹤或被追蹤
             if (trackingManager.isTracking(target.getUniqueId()) || trackingManager.isTracked(target.getUniqueId())) {
                 tracker.sendMessage(cannotTrackTrackingMessage.replace("{target}", targetName));
                 tracker.closeInventory();
                 return;
             }
-            if (homeProtectionHandler.isInAnyPlayerHome(target) || worldProtectionHandler.isInUntrackableWorld(target)) {
+            if (isPlayerProtected(target)) {
                 tracker.sendMessage(cannotTrackMessage.replace("{target}", targetName));
                 tracker.closeInventory();
                 return;
@@ -90,5 +104,13 @@ public class TrackingGUI implements Listener {
             trackingManager.startTracking(tracker, target);
             tracker.closeInventory();
         }
+    }
+
+    public boolean isPlayerProtected(Player target) {
+        return homeProtectionHandler.isInAnyPlayerHome(target) ||
+                spawnProtectionHandler.isInProtectedArea(target) ||
+                worldProtectionHandler.isInUntrackableWorld(target) ||
+                yLevelProtectionHandler.isInProtectedYLevel(target) ||
+                pvpManagerProtectionHandler.isPvpDisabled(target);
     }
 }
