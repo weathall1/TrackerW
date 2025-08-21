@@ -1,7 +1,30 @@
-name: YaegerTrack
-version: '1.0'
+name: PlayerTracker
+version: 1.0.0
 main: com.yourpackage.PlayerTrackerPlugin
-api-version: '1.21'
-load: STARTUP
-authors: [ Weathall ]
-description: No Description
+api-version: 1.20
+depend: [WildRTP]
+softdepend: [Vault, Essentials, PlaceholderAPI]
+commands:
+  track:
+    description: 開啟追蹤GUI
+    usage: /track
+    permission: playertracker.use
+  stoptrack:
+    description: 停止當前追蹤
+    usage: /stoptrack
+    permission: playertracker.use
+  canceltrack:
+    description: 取消他人對您的追蹤
+    usage: /canceltrack
+    permission: playertracker.use
+  playertracker:
+    description: 管理 PlayerTracker 插件
+    usage: /playertracker <reload>
+    permission: playertracker.admin
+permissions:
+  playertracker.use:
+    description: 允許使用追蹤功能
+    default: op
+  playertracker.admin:
+    description: 允許管理插件配置
+    default: op

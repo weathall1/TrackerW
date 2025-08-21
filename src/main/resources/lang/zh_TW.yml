@@ -1,0 +1,14 @@
+# PlayerTracker 語言文件（繁體中文，zh_TW）
+messages:
+  teleport-cancelled: "傳送已取消，請重新選擇目標以再次嘗試。"
+  tracking-started: "已選擇追蹤 {target}。請保持不動{seconds}秒以傳送。"
+  tracking-started-notify-target: "您已被 {tracker} 追蹤。"
+  tracking-stopped: "已停止追蹤。"
+  tracking-timeout: "追蹤時間已過，自動停止追蹤。"
+  tracking-completed: "追蹤已完結。"
+  cannot-track: "無法追蹤 {target}，該玩家位於其他玩家的家保護範圍內。"
+  teleport-success: "已傳送至目標附近500格。"
+  teleport-blocked: "追蹤尚未結束，無法使用傳送指令。"
+  config-reloaded: "PlayerTracker 配置已重新載入。"
+  no-permission: "您無權執行此命令。"
+  actionbar-countdown: "傳送倒計時：%seconds%秒"

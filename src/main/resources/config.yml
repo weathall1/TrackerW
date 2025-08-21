@@ -1,0 +1,54 @@
+# PlayerTracker 配置文件
+# 傳送等候時間（秒）
+teleport-delay-seconds: 5
+
+# 傳送倒計時音效
+countdown-sound:
+  enabled: true
+  sound: BLOCK_NOTE_BLOCK_PLING
+  volume: 1.0
+  pitch: 1.0
+
+# 傳送中斷音效
+interrupted-sound:
+  enabled: true
+  sound: BLOCK_NOTE_BLOCK_BASS
+  volume: 1.0
+  pitch: 0.5
+
+# 動作欄顯示
+actionbar:
+  enabled: true
+  message: "傳送倒計時：%seconds%秒"
+
+# 家保護範圍（以chunk為單位，0=僅home chunk，1=周圍1層chunk，總9個，2=周圍2層chunk，總25個）
+home-protection-chunk-range: 1
+
+# Y level閾值（低於此值且在home保護範圍內的玩家不受追蹤）
+y-level-threshold: -13
+
+# 受保護範圍（以出生點為中心，單位：格）
+protected-radius: 0
+
+# 受保護世界（出生點保護範圍所在世界）
+protected-world: world
+
+# GUI 更新間隔（秒）
+gui-update-interval-seconds: 60
+
+# tracking 持續時間（分鐘）
+tracking-duration-minutes: 5
+
+# 經濟系統設置（需要 Vault）
+economy:
+  track-cost: 50000
+  cancel-cost: 70000
+
+# 不受追蹤的世界清單
+untrackable-worlds:
+  - AfkZone
+# 傳送半徑（格，預設500）
+# WildRTP 傳送範圍（單位：格）
+teleport:
+  startRadius: 300
+  endRadius: 500
