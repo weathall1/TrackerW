@@ -75,7 +75,7 @@ pvpmanager-protection:
 # 保險設置
 insurance:
   enable: true             # 是否啟用保險功能
-  cost-per-hour: 1000      # 每小時保險價錢
+  cost-per-hour: 30000      # 每小時保險價錢
   new-player-hours: 16     # 新玩家首次註冊獲得的保險時數（小時）
   sounds:
     enable: "ENTITY_EXPERIENCE_ORB_PICKUP" # 啟用保險聲音

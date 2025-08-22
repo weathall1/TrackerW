@@ -27,7 +27,7 @@ public class TrackingManager implements Listener {
     private final Map<UUID, UUID> trackingMap = new HashMap<>();
     private final Set<UUID> trackedPlayers = new HashSet<>();
     private final Map<UUID, Long> immobilityTimers = new HashMap<>();
-    private final Map<UUID, UUID> pendingTargets = new HashMap<>(); // 新增臨時追蹤目標映射
+    private final Map<UUID, UUID> pendingTargets = new HashMap<>();
     private final Map<UUID, BukkitRunnable> countdownTasks = new HashMap<>();
     private final Map<UUID, Long> trackingStartTimes = new HashMap<>();
     private int teleportDelayMillis;
@@ -85,23 +85,26 @@ public class TrackingManager implements Listener {
     public void startTracking(Player tracker, Player target) {
         UUID trackerUUID = tracker.getUniqueId();
         immobilityTimers.put(trackerUUID, System.currentTimeMillis());
-        pendingTargets.put(trackerUUID, target.getUniqueId()); // 儲存臨時追蹤目標
+        pendingTargets.put(trackerUUID, target.getUniqueId());
         tracker.sendMessage(trackingStartedMessage.replace("{target}", target.getName()).replace("{seconds}", String.valueOf(teleportDelayMillis / 1000)));
         startCountdown(tracker);
     }
 
     public void confirmTracking(Player tracker, Player target) {
-        if (economyHandler.deductTrackCost(tracker)) {
-            UUID trackerUUID = tracker.getUniqueId();
-            UUID targetUUID = target.getUniqueId();
-            trackingMap.put(trackerUUID, targetUUID);
-            trackedPlayers.add(targetUUID);
-            trackingStartTimes.put(trackerUUID, System.currentTimeMillis());
-            pendingTargets.remove(trackerUUID); // 移除臨時目標
-            compassHandler.giveTrackingCompass(tracker, target);
-            target.sendMessage(trackingStartedNotifyTargetMessage.replace("{tracker}", tracker.getName()));
-            tracker.sendMessage(teleportSuccessMessage);
+        UUID trackerUUID = tracker.getUniqueId();
+        UUID targetUUID = target.getUniqueId();
+        if (!economyHandler.deductTrackCost(tracker)) {
+            tracker.sendMessage(plugin.getConfig().getString("lang.messages.insufficient-funds", "您的餘額不足，無法進行此操作。"));
+            pendingTargets.remove(trackerUUID);
+            return;
         }
+        trackingMap.put(trackerUUID, targetUUID);
+        trackedPlayers.add(targetUUID);
+        trackingStartTimes.put(trackerUUID, System.currentTimeMillis());
+        pendingTargets.remove(trackerUUID);
+        compassHandler.giveTrackingCompass(tracker, target);
+        target.sendMessage(trackingStartedNotifyTargetMessage.replace("{tracker}", tracker.getName()));
+        tracker.sendMessage(teleportSuccessMessage);
     }
 
     public void stopTracking(Player tracker) {
@@ -116,7 +119,7 @@ public class TrackingManager implements Listener {
         }
         immobilityTimers.remove(trackerUUID);
         trackingStartTimes.remove(trackerUUID);
-        pendingTargets.remove(trackerUUID); // 清理臨時目標
+        pendingTargets.remove(trackerUUID);
         compassHandler.stopCompassTask(trackerUUID);
         stopCountdownTask(trackerUUID);
         if (actionBarEnabled) {
@@ -148,7 +151,7 @@ public class TrackingManager implements Listener {
                 trackedPlayers.remove(trackedUUID);
                 immobilityTimers.remove(trackerUUID);
                 trackingStartTimes.remove(trackerUUID);
-                pendingTargets.remove(trackerUUID); // 清理臨時目標
+                pendingTargets.remove(trackerUUID);
             }
         }
     }
@@ -164,7 +167,7 @@ public class TrackingManager implements Listener {
     public UUID getTarget(UUID trackerUUID) {
         UUID targetUUID = trackingMap.get(trackerUUID);
         if (targetUUID == null) {
-            targetUUID = pendingTargets.get(trackerUUID); // 檢查臨時目標
+            targetUUID = pendingTargets.get(trackerUUID);
         }
         return targetUUID;
     }
@@ -191,7 +194,7 @@ public class TrackingManager implements Listener {
         UUID uuid = event.getPlayer().getUniqueId();
         if (immobilityTimers.containsKey(uuid) && event.getFrom().distance(event.getTo()) > 0.1) {
             immobilityTimers.remove(uuid);
-            pendingTargets.remove(uuid); // 清理臨時目標
+            pendingTargets.remove(uuid);
             playInterruptedSound(event.getPlayer());
             stopCountdownTask(uuid);
             if (actionBarEnabled) {
@@ -252,7 +255,7 @@ public class TrackingManager implements Listener {
                     if (tracker == null) continue;
                     if (System.currentTimeMillis() - entry.getValue() >= teleportDelayMillis) {
                         UUID targetId = getTarget(trackerId);
-                        if (targetId == null) continue; // 防止 null 目標
+                        if (targetId == null) continue;
                         Player target = Bukkit.getPlayer(targetId);
                         if (target != null) {
                             teleportHandler.teleportNearTarget(tracker, target);

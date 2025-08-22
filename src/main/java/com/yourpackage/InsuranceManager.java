@@ -101,17 +101,20 @@ public class InsuranceManager {
                 stmt.setString(1, uuid.toString());
                 ResultSet rs = stmt.executeQuery();
                 if (!rs.next()) {
-                    // 首次註冊，給予新玩家保險
+                    // 首次註冊，給予新玩家保險，預設啟用
                     double initialTime = newPlayerHours * 60; // 轉換為分鐘
                     sql = "INSERT INTO insurance (uuid, insurance_time, is_enabled) VALUES (?, ?, ?)";
                     try (PreparedStatement insertStmt = connection.prepareStatement(sql)) {
                         insertStmt.setString(1, uuid.toString());
                         insertStmt.setDouble(2, initialTime);
-                        insertStmt.setBoolean(3, false);
+                        insertStmt.setBoolean(3, true); // 預設啟用保險
                         insertStmt.executeUpdate();
                     }
                     insuranceTimeCache.put(uuid, initialTime);
-                    insuranceEnabledCache.put(uuid, false);
+                    insuranceEnabledCache.put(uuid, true); // 預設啟用
+                    // 通知玩家保險已啟用
+                    player.sendMessage(plugin.getConfig().getString("lang.messages.insurance-enabled", "保險已啟用。"));
+                    player.playSound(player.getLocation(), enableSound, 1.0f, 1.0f);
                 } else {
                     insuranceTimeCache.put(uuid, rs.getDouble("insurance_time"));
                     insuranceEnabledCache.put(uuid, rs.getBoolean("is_enabled"));
@@ -133,6 +136,7 @@ public class InsuranceManager {
     public void toggleInsurance(Player player) {
         if (!enableInsurance) {
             player.sendMessage(plugin.getConfig().getString("lang.messages.insurance-disabled", "保險已關閉。"));
+            player.playSound(player.getLocation(), purchaseFailSound, 1.0f, 1.0f);
             return;
         }
         UUID uuid = player.getUniqueId();

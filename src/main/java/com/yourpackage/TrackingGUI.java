@@ -67,6 +67,11 @@ public class TrackingGUI implements Listener {
     }
 
     public void openTrackingGUI(Player player) {
+        if (player == null) {
+            plugin.getLogger().warning("嘗試開啟 GUI 時玩家為 null");
+            return;
+        }
+        plugin.getLogger().info("為玩家 " + player.getName() + " (UUID: " + player.getUniqueId() + ") 開啟 TrackingGUI");
         Inventory gui = Bukkit.createInventory(null, 54, "選擇追蹤目標");
         int slot = 0;
         for (UUID targetUUID : trackablePlayers) {
@@ -90,6 +95,7 @@ public class TrackingGUI implements Listener {
             // Slot 45: 自身頭顱
             ItemStack selfSkull = new ItemStack(Material.PLAYER_HEAD);
             SkullMeta selfMeta = (SkullMeta) selfSkull.getItemMeta();
+            selfMeta.setOwner(player.getName()); // 使用玩家名稱設置頭顱
             double minutes = insuranceManager.getInsuranceTime(player.getUniqueId());
             int hours = (int) (minutes / 60);
             int remainingMinutes = (int) (minutes % 60);
@@ -159,7 +165,8 @@ public class TrackingGUI implements Listener {
                 player.closeInventory();
                 return;
             }
-            if (!economyHandler.deductTrackCost(player)) {
+            if (!economyHandler.canAffordTrackCost(player)) {
+                player.sendMessage(plugin.getConfig().getString("lang.messages.insufficient-funds", "您的餘額不足，無法進行此操作。"));
                 player.closeInventory();
                 return;
             }
