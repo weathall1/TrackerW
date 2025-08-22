@@ -5,9 +5,9 @@ api-version: 1.20
 depend: [WildRTP]
 softdepend: [Vault, Essentials, PlaceholderAPI]
 commands:
-  track:
+  tracker:
     description: 開啟追蹤GUI
-    usage: /track
+    usage: /tracker
     permission: playertracker.use
   stoptrack:
     description: 停止當前追蹤

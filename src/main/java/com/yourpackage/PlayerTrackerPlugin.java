@@ -7,6 +7,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -14,7 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
+public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor, Listener {
     private Essentials essentials;
     private TrackingGUI trackingGUI;
     private TrackingManager trackingManager;
@@ -22,6 +25,7 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
     private CommandDisabler commandDisabler;
     private TeleportHandler teleportHandler;
     private EconomyHandler economyHandler;
+    private InsuranceManager insuranceManager;
     private Set<UUID> trackablePlayers;
     private BukkitRunnable guiUpdateTask;
     private int guiUpdateIntervalTicks;
@@ -41,17 +45,19 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
         trackablePlayers = new HashSet<>();
 
         economyHandler = new EconomyHandler(this);
+        insuranceManager = new InsuranceManager(this, economyHandler);
         teleportHandler = new TeleportHandler(this);
         compassHandler = new CompassHandler(this, null);
         trackingManager = new TrackingManager(this, compassHandler, economyHandler);
         compassHandler.setTrackingManager(trackingManager);
-        trackingGUI = new TrackingGUI(this, essentials, trackingManager, compassHandler, economyHandler, trackablePlayers, protectedCenter);
+        trackingGUI = new TrackingGUI(this, essentials, trackingManager, compassHandler, economyHandler, insuranceManager, trackablePlayers, protectedCenter);
         commandDisabler = new CommandDisabler(this, trackingManager);
 
         getServer().getPluginManager().registerEvents(trackingGUI, this);
         getServer().getPluginManager().registerEvents(commandDisabler, this);
         getServer().getPluginManager().registerEvents(trackingManager, this);
-        getCommand("track").setExecutor(this);
+        getServer().getPluginManager().registerEvents(this, this); // 註冊玩家登入事件
+        getCommand("tracker").setExecutor(this);
         getCommand("stoptrack").setExecutor(this);
         getCommand("canceltrack").setExecutor(this);
         getCommand("playertracker").setExecutor(this);
@@ -64,6 +70,16 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
         }
 
         startGuiUpdateTask();
+    }
+
+    @Override
+    public void onDisable() {
+        insuranceManager.close(); // 關閉資料庫連線
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        insuranceManager.registerPlayer(event.getPlayer()); // 處理新玩家保險註冊
     }
 
     private void loadConfigValues() {
@@ -98,7 +114,7 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
         if (!(sender instanceof Player)) return true;
         Player player = (Player) sender;
 
-        if (cmd.getName().equalsIgnoreCase("track")) {
+        if (cmd.getName().equalsIgnoreCase("tracker")) {
             trackingGUI.openTrackingGUI(player);
         } else if (cmd.getName().equalsIgnoreCase("stoptrack")) {
             trackingManager.stopTracking(player);
@@ -122,6 +138,7 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor {
         trackingGUI.reloadConfigValues();
         commandDisabler.reloadConfigValues();
         economyHandler.reloadConfigValues();
+        insuranceManager.reloadConfigValues(); // 添加保險配置重載
         updateTrackablePlayers();
         startGuiUpdateTask();
     }

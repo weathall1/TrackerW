@@ -72,6 +72,16 @@ pvpmanager-protection:
   pvpmanager-protection-pvpoff: true  # 是否檢查PvP關閉狀態
   pvpmanager-protection-newbie: true  # 是否檢查新手保護
 
+# 保險設置
+insurance:
+  enable: true             # 是否啟用保險功能
+  cost-per-hour: 1000      # 每小時保險價錢
+  new-player-hours: 16     # 新玩家首次註冊獲得的保險時數（小時）
+  sounds:
+    enable: "ENTITY_EXPERIENCE_ORB_PICKUP" # 啟用保險聲音
+    disable: "BLOCK_NOTE_BLOCK_BASS"      # 關閉保險聲音
+    purchase-success: "ENTITY_PLAYER_LEVELUP" # 購買成功聲音
+    purchase-fail: "BLOCK_ANVIL_LAND"     # 購買失敗聲音
 # 資料庫設置
 Database:
   # Database type, supported databases: SQLite or MySQL
@@ -82,4 +92,4 @@ Database:
     Port: 3306
     Username: root
     Password: '12345'
-    Database: playertracker  # 專用資料庫名稱，勿與 minecraft 資料庫重疊
+    Database: playertracker

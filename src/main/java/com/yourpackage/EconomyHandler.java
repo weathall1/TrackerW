@@ -14,6 +14,7 @@ public class EconomyHandler {
     private String trackCostDeductedMessage;
     private String cancelCostDeductedMessage;
     private String noTrackingToCancelMessage;
+    private String insuranceCostDeductedMessage;
 
     public EconomyHandler(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -42,21 +43,46 @@ public class EconomyHandler {
         trackCostDeductedMessage = plugin.getConfig().getString("messages.track-cost-deducted", "已扣除 {cost} 貨幣進行追蹤。");
         cancelCostDeductedMessage = plugin.getConfig().getString("messages.cancel-cost-deducted", "已扣除 {cost} 貨幣取消追蹤。");
         noTrackingToCancelMessage = plugin.getConfig().getString("messages.no-tracking-to-cancel", "您目前沒有被追蹤。");
+        insuranceCostDeductedMessage = plugin.getConfig().getString("messages.insurance-cost-deducted", "已扣除 {cost} 貨幣購買 1 小時保險。");
     }
 
     public boolean isEconomyEnabled() {
         return economy != null;
     }
 
+    public boolean canAfford(Player player, double amount) {
+        if (!isEconomyEnabled()) {
+            player.sendMessage(insufficientFundsMessage);
+            return false;
+        }
+        return economy.has(player, amount);
+    }
+
+    public boolean deduct(Player player, double amount) {
+        if (!isEconomyEnabled()) {
+            player.sendMessage(insufficientFundsMessage);
+            return false;
+        }
+        if (!economy.has(player, amount)) {
+            player.sendMessage(insufficientFundsMessage);
+            return false;
+        }
+        boolean success = economy.withdrawPlayer(player, amount).transactionSuccess();
+        if (success && amount == plugin.getConfig().getDouble("insurance.cost-per-hour", 1000.0)) {
+            player.sendMessage(insuranceCostDeductedMessage.replace("{cost}", String.valueOf(amount)));
+        }
+        return success;
+    }
+
     public boolean canAffordTrackCost(Player player) {
         if (!isEconomyEnabled()) {
             return true; // No economy, allow tracking
         }
-        return economy.getBalance(player) >= trackCost;
+        return economy.has(player, trackCost);
     }
 
     public boolean deductTrackCost(Player player) {
-        if (!isEconomyEnabled() || economy.getBalance(player) >= trackCost) {
+        if (!isEconomyEnabled() || economy.has(player, trackCost)) {
             if (isEconomyEnabled()) {
                 economy.withdrawPlayer(player, trackCost);
                 player.sendMessage(trackCostDeductedMessage.replace("{cost}", String.valueOf(trackCost)));
@@ -68,7 +94,7 @@ public class EconomyHandler {
     }
 
     public boolean deductCancelCost(Player player) {
-        if (!isEconomyEnabled() || economy.getBalance(player) >= cancelCost) {
+        if (!isEconomyEnabled() || economy.has(player, cancelCost)) {
             if (isEconomyEnabled()) {
                 economy.withdrawPlayer(player, cancelCost);
                 player.sendMessage(cancelCostDeductedMessage.replace("{cost}", String.valueOf(cancelCost)));
