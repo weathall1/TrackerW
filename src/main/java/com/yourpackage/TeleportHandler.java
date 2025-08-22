@@ -31,6 +31,5 @@ public class TeleportHandler {
                 playerName, worldName, startRadius, endRadius, originX, originZ);
         Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), command);
 
-        tracker.sendMessage("已傳送至目標附近500格。");
     }
 }
