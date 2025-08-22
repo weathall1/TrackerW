@@ -26,3 +26,11 @@ messages:
   no-tracking-to-cancel: "您目前沒有被追蹤。"
   insurance-enabled-title: "保險：&a已啟用"
   insurance-disabled-title: "保險：&c已關閉"
+
+  target-quit-tracking-ended: "目標 {target} 已退出遊戲，追蹤結束，已退款 {cost} 元。"
+  target-quit-penalty: "您因退出遊戲被扣減 {deducted} 元（追蹤罰款）。"
+  target-natural-death-tracking-ended: "目標 {target} 已自然死亡，追蹤結束，已退款 {cost} 元。"
+  target-natural-death-penalty: "您因自然死亡被扣減 {deducted} 元（追蹤罰款）。"
+  target-killed-by-player-tracking-ended: "目標 {target} 被玩家殺死，追蹤結束。"
+  tracker-quit-tracking-ended: "追蹤者 {tracker} 已退出遊戲，您的追蹤狀態已結束。"
+  tracker-death-tracking-ended: "追蹤者 {tracker} 已死亡，您的追蹤狀態已結束。"

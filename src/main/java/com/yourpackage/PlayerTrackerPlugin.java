@@ -21,6 +21,8 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor, 
     private Essentials essentials;
     private TrackingGUI trackingGUI;
     private TrackingManager trackingManager;
+    private TrackingEventHandler trackingEventHandler;
+    private TrackingTimer trackingTimer;
     private CompassHandler compassHandler;
     private CommandDisabler commandDisabler;
     private TeleportHandler teleportHandler;
@@ -48,15 +50,18 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor, 
         insuranceManager = new InsuranceManager(this, economyHandler);
         teleportHandler = new TeleportHandler(this);
         compassHandler = new CompassHandler(this, null);
-        trackingManager = new TrackingManager(this, compassHandler, economyHandler);
+        trackingTimer = new TrackingTimer(this, null, compassHandler, teleportHandler); // 先初始化 trackingTimer
+        trackingManager = new TrackingManager(this, compassHandler, economyHandler, trackingTimer); // 注入 trackingTimer
+        trackingEventHandler = new TrackingEventHandler(this, trackingManager, compassHandler, economyHandler, teleportHandler);
         compassHandler.setTrackingManager(trackingManager);
+        trackingTimer.setTrackingManager(trackingManager); // 設置 trackingManager
         trackingGUI = new TrackingGUI(this, essentials, trackingManager, compassHandler, economyHandler, insuranceManager, trackablePlayers, protectedCenter);
         commandDisabler = new CommandDisabler(this, trackingManager);
 
         getServer().getPluginManager().registerEvents(trackingGUI, this);
         getServer().getPluginManager().registerEvents(commandDisabler, this);
-        getServer().getPluginManager().registerEvents(trackingManager, this);
-        getServer().getPluginManager().registerEvents(this, this); // 註冊玩家登入事件
+        getServer().getPluginManager().registerEvents(trackingEventHandler, this);
+        getServer().getPluginManager().registerEvents(this, this);
         getCommand("tracker").setExecutor(this);
         getCommand("stoptrack").setExecutor(this);
         getCommand("canceltrack").setExecutor(this);
@@ -74,12 +79,12 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor, 
 
     @Override
     public void onDisable() {
-        insuranceManager.close(); // 關閉資料庫連線
+        insuranceManager.close();
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        insuranceManager.registerPlayer(event.getPlayer()); // 處理新玩家保險註冊
+        insuranceManager.registerPlayer(event.getPlayer());
     }
 
     private void loadConfigValues() {
@@ -138,7 +143,9 @@ public class PlayerTrackerPlugin extends JavaPlugin implements CommandExecutor, 
         trackingGUI.reloadConfigValues();
         commandDisabler.reloadConfigValues();
         economyHandler.reloadConfigValues();
-        insuranceManager.reloadConfigValues(); // 添加保險配置重載
+        insuranceManager.reloadConfigValues();
+        trackingEventHandler.reloadConfigValues();
+        trackingTimer.reloadConfigValues();
         updateTrackablePlayers();
         startGuiUpdateTask();
     }

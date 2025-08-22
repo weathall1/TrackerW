@@ -1,6 +1,7 @@
 package com.yourpackage;
 
 import net.milkbowl.vault.economy.Economy;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -10,6 +11,7 @@ public class EconomyHandler {
     private Economy economy;
     private int trackCost;
     private int cancelCost;
+    private int naturalDeathPenalty;
     private String insufficientFundsMessage;
     private String trackCostDeductedMessage;
     private String cancelCostDeductedMessage;
@@ -39,6 +41,7 @@ public class EconomyHandler {
     public void reloadConfigValues() {
         trackCost = plugin.getConfig().getInt("economy.track-cost", 100);
         cancelCost = plugin.getConfig().getInt("economy.cancel-cost", 200);
+        naturalDeathPenalty = plugin.getConfig().getInt("economy.natural-death-penalty", 30000);
         insufficientFundsMessage = plugin.getConfig().getString("messages.insufficient-funds", "您的餘額不足，無法進行此操作。");
         trackCostDeductedMessage = plugin.getConfig().getString("messages.track-cost-deducted", "已扣除 {cost} 貨幣進行追蹤。");
         cancelCostDeductedMessage = plugin.getConfig().getString("messages.cancel-cost-deducted", "已扣除 {cost} 貨幣取消追蹤。");
@@ -74,9 +77,23 @@ public class EconomyHandler {
         return success;
     }
 
+    public void deposit(OfflinePlayer player, double amount) {
+        if (isEconomyEnabled()) {
+            economy.depositPlayer(player, amount);
+        }
+    }
+
+    public double deductMax(OfflinePlayer player, double maxAmount) {
+        if (!isEconomyEnabled()) return 0.0;
+        double balance = economy.getBalance(player);
+        double toDeduct = Math.min(balance, maxAmount);
+        economy.withdrawPlayer(player, toDeduct);
+        return toDeduct;
+    }
+
     public boolean canAffordTrackCost(Player player) {
         if (!isEconomyEnabled()) {
-            return true; // No economy, allow tracking
+            return true;
         }
         return economy.has(player, trackCost);
     }
@@ -107,5 +124,17 @@ public class EconomyHandler {
 
     public String getNoTrackingToCancelMessage() {
         return noTrackingToCancelMessage;
+    }
+
+    public int getNaturalDeathPenalty() {
+        return naturalDeathPenalty;
+    }
+
+    public int getTrackCost() {
+        return trackCost;
+    }
+
+    public int getCancelCost() {
+        return cancelCost;
     }
 }

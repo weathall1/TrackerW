@@ -33,11 +33,10 @@ tracking-duration-seconds: 300
 
 # 經濟系統設置（需要 Vault）
 economy:
-  heart-difference-enabled: false  # 是否啟用心數差距計算追蹤價錢（適用於LifeSteal主題）
   track-cost: 50000
   track-cost-per-heart: 10000  # 每心差距（目標 > 追蹤者）的額外成本
   cancel-cost: 70000
-
+  natural-death-penalty: 30000  # 新增：自然死亡扣減金額
 
 # WildRTP 傳送範圍（單位：格）
 teleport:
